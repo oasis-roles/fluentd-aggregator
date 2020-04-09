@@ -1,0 +1,57 @@
+---
+# defaults file for fluented_aggregator
+fld_aggr: "{{ ansible_default_ipv4.address }}"
+
+#If using a satellite server - change to true, otherwise leave false to pull from internet
+satellite: false
+fluentd_gems:
+  - fluent-plugin-secure-forward
+  - fluent-plugin-elasticsearch
+
+#Logical Volume configuration
+fluentd_storage_config:
+  - mount_point: /var/log/td-agent/
+    vg_name: fluentd_vg
+    lv_name: fluentd_lv
+    lv_size: '100%FREE'
+
+#Firewall ports for firewalld
+fluentd_firewall_ports:
+  - 22/tcp
+  - 42185/udp
+
+fluentd_packages:
+  - td-agent
+
+system_packages:
+  - lvm2
+  - vim
+  - firewalld
+
+fluentd_services:
+  - td-agent
+
+system_services:
+  - firewalld
+
+sysctl_settings:
+  - name: net.core.somaxconn
+    value: '1024'
+  - name: net.core.netdev_max_backlog
+    value: '5000'
+  - name: net.core.rmem_max
+    value: '16777216'
+  - name: net.core.wmem_max
+    value: '16777216'
+  - name: net.ipv4.tcp_wmem
+    value: '4096 12582912 16777216'
+  - name: net.ipv4.tcp_rmem
+    value: '4096 12582912 16777216'
+  - name: net.ipv4.tcp_max_syn_backlog
+    value: '8096'
+  - name: net.ipv4.tcp_slow_start_after_idle
+    value: '0'
+  - name: net.ipv4.tcp_tw_reuse
+    value: '1'
+  - name: net.ipv4.ip_local_port_range
+    value: '10240 65535'

@@ -1,0 +1,46 @@
+---
+- name: fluentd_aggregator | Import repo if not using Satellite
+  block:
+    - name: fluentd_aggregator | Import the gpg key
+      rpm_key:
+        key: https://packages.treasuredata.com/GPG-KEY-td-agent
+        state: present
+
+    - name: fluentd_aggregator | Confiure yum repository
+      yum_repository:
+        name: treasuredata
+        description: treasuredata repository
+        baseurl: http://packages.treasuredata.com/3/redhat/\$releasever/\$basearch
+        gpgcheck: yes
+        gpgkey: https://packages.treasuredata.com/GPG-KEY-td-agent
+  when: satellite == false
+
+- name: fluentd_aggregator | Install Packages
+  package:
+    name: "{{ item }}"
+    state: installed
+  loop: "{{ fluentd_packages }}"
+
+- name: install the required gem files
+  command: /usr/sbin/td-agent-gem install {{ item }}
+  with_items:
+    - "{{ fluentd_gems }}"
+
+- name: generate ca-cert
+  command: /opt/td-agent/embedded/lib/ruby/gems/2.4.0/bin/secure-forward-ca-generate /opt/td-agent/ somepassword
+
+- name: fluentd_aggregator | Put the fluentd configuration in place
+  template:
+    src: td-agent.conf.j2
+    dest: /etc/td-agent/td-agent.conf
+    mode: 0644
+    owner: root
+    group: root
+
+- name: fluentd_aggregator | Start and Enable treasuredata Service
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop: "{{ fluentd_services }}"
+...

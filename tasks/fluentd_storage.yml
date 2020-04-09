@@ -1,0 +1,41 @@
+---
+#TASKS
+- name: fluentd_aggregator | Create the directory path
+  file:
+    path: "{{ fluentd.mount_point }}"
+    state: directory
+    mode: 0755
+- name: Searching for disk for 100G or more
+  shell: lsblk -l | grep -v -e vg | grep [1-9]00G | awk '{ print  $1 }'
+  register: data_disk
+
+- name: fluentd_aggregator | Create the volume group
+  lvg:
+    vg: "{{ fluentd.vg_name }}"
+    pvs: "/dev/{{ data_disk.stdout }}"
+  register: lvm
+
+- name: fluentd_aggregator | Configure storage on the system
+  block:
+
+
+    - name: fluentd_aggregator | Create the logical volume to be mounted
+      lvol:
+        vg: "{{ fluentd.vg_name }}"
+        lv: "{{ fluentd.lv_name }}"
+        size: "{{ fluentd.lv_size }}"
+      when: lvm.changed
+
+    - name: fluentd_aggregator | Create a filesystem on the logical volume that was just created
+      filesystem:
+        fstype: xfs
+        dev: /dev/mapper/{{ fluentd.vg_name }}-{{ fluentd.lv_name }}
+
+    - name: fluentd_aggregator | Mount the additional disk used
+      mount:
+        path: "{{ fluentd.mount_point }}"
+        src: /dev/mapper/{{ fluentd.vg_name }}-{{ fluentd.lv_name }}
+        fstype: xfs
+        state: mounted
+  when: lvm.changed
+...

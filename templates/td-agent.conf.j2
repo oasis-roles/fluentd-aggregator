@@ -1,0 +1,21 @@
+<source>
+  @type syslog
+  port 42185
+  tag  rsyslog
+</source>
+<source>
+  @type secure_forward
+  shared_key FLUENTD_SECRET
+  self_hostname {{ ansible_nodename }}
+  secure true
+  ca_cert_path /opt/td-agent/ca_cert.pem
+  ca_private_key_path /opt/td-agent/ca_key.pem
+  ca_private_key_passphrase somepassword
+</source>
+
+<match rsyslog.**>
+  @type copy
+  <store>
+    @type stdout
+  </store>
+</match>

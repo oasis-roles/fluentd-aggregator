@@ -1,0 +1,13 @@
+---
+- name: fluentd_aggregator | Install packages and tune system prior to Fluentd installation
+  include_tasks: fluentd_system_config.yml 
+
+- name: fluentd_aggregator | Configure storage for FluentD
+  include_tasks: fluentd_storage.yml
+  loop: "{{ fluentd_storage_config }}"
+  loop_control:
+    loop_var: fluentd
+
+- name: fluentd_aggregator | Import tasks to install and configure the service
+  include_tasks: fluentd_aggregator.yml
+

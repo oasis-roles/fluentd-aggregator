@@ -1,0 +1,32 @@
+---
+- name: fluentd_aggregator | Install System Packages
+  package:
+    name: "{{ item }}"
+    state: installed
+  loop: "{{ system_packages }}"
+
+- name: fluentd_aggregator | Start and Enable system services
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop: "{{ system_services }}"
+
+- name: fluentd_aggregator | Configure firewall to support Fluentd
+  firewalld:
+    port: "{{ item }}"
+    immediate: true
+    permanent: true
+    state: enabled
+  with_items:
+    - "{{ fluentd_firewall_ports }}"
+
+- name: fluentd_aggregator | Configure kernel paramaters to tune fluentd
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+  loop: "{{ sysctl_settings }}"
+
+...
